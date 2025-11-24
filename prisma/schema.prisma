@@ -5,10 +5,34 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
+  // output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// テーブル定義
+
+// 局の情報を保存するテーブル
+model Song {
+  id Int @id @default(autoincrement())
+  title String
+  artist String
+  albumArt String?
+
+  posts Post[]
+}
+
+// 日記を保存するテーブル
+model Post {
+  id Int @id @default(autoincrement())
+  content String
+  mood String?
+  createdAt DateTime @default(now())
+
+  songId Int
+  song Song @relation(fields: [songId], references:  [id])
 }

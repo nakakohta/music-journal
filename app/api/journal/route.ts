@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma'; //シングルトンパターンでエクスポートされたPrisma Client
+
+export async function POST(req: NextRequest) {
+    try {
+        // フロントからデータを受け取る
+        const body = await req.json();
+        const { title, artist, content, mood } = body;
+
+        // データベースに保存
+        const newPost = await prisma.post.create({
+            data: {
+                content: content,
+                mood: mood,
+                song: {
+                    create: {
+                        title: title,
+                        artist: artist,
+                    }
+                }
+            },
+            // 保存したデータを、関連するSong情報込みで返す設定
+            include: {
+                song: true,
+            }
+        });
+
+        return NextResponse.json(newPost);
+    }catch (error:any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message ||'保存に失敗しました' }, { status: 500 } , );
+    }
+}
+
+export async function GET() {
+    try {
+        const posts = await prisma.post.findMany({
+            orderBy: {
+                createdAt: 'desc',
+            },
+            include: {
+                song: true,
+            },
+        });
+        
+        return NextResponse.json(posts);
+    }catch (error) {
+        return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
+    }
+}
