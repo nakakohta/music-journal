@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-// 1. 型定義 (JavaのDTOクラスのようなもの)
+// 型定義 (JavaのDTOクラスのようなもの)
 interface Journal {
   id: number;
   content: string;
@@ -21,11 +21,11 @@ export default function JournalPage() {
     content: ''
   });
   
-  // 2. 日記一覧を管理するリスト (初期値は空の配列)
+  // 日記一覧を管理するリスト (初期値は空の配列)
   const [journals, setJournals] = useState<Journal[]>([]);
   const [status, setStatus] = useState('');
 
-  // 3. データを取得する関数
+  // データを取得する関数
   const fetchJournals = async () => {
     try {
       const res = await fetch('/api/journal'); // GETリクエスト
@@ -36,15 +36,19 @@ export default function JournalPage() {
     }
   };
 
-  // 4. 画面が表示された「後」に一度だけ実行される (初期ロード)
+  // 画面が表示された「後」に一度だけ実行される (初期ロード)
   useEffect(() => {
     fetchJournals();
   }, []);
 
+
+
+  // フォーム入力変更時のハンドラー
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+    // フォーム送信時のハンドラー
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('送信中...');
@@ -66,6 +70,24 @@ export default function JournalPage() {
 
     } catch (err: any) {
       setStatus(`❌ エラー: ${err.message}`);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('本当に削除しますか？')) return; // 確認ダイアログ
+
+    try {
+      const res = await fetch(`/api/journal?id=${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) throw new Error('削除失敗');
+
+      // 成功したらリストを更新
+      fetchJournals();
+      setStatus('✅ 削除しました！');
+    } catch (err) {
+      alert('削除に失敗しました');
     }
   };
 
@@ -110,15 +132,20 @@ export default function JournalPage() {
           <div className="space-y-4">
             {/* 5. ループで表示 (Javaの for-each) */}
             {journals.map((journal) => (
-              <div key={journal.id} className="bg-white p-4 rounded-xl shadow border-l-4 border-indigo-500">
-                <div className="flex justify-between items-start">
+              <div key={journal.id} className="bg-white p-4 rounded-xl shadow border-l-4 border-indigo-500 relative group">
+                <button
+                  onClick={() => handleDelete(journal.id)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="削除する"
+                >
+                  ✕
+                </button>
+                <div className="flex justify-between items-start pr-6">
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">{journal.song.title}</h3>
                     <p className="text-sm text-gray-500">{journal.song.artist}</p>
                   </div>
-                  <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                    {journal.mood}
-                  </span>
+                  <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">{journal.mood}</span>
                 </div>
                 <p className="mt-2 text-gray-700">{journal.content}</p>
                 <p className="text-xs text-gray-400 mt-2 text-right">
@@ -132,7 +159,6 @@ export default function JournalPage() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

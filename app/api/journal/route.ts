@@ -49,3 +49,23 @@ export async function GET() {
         return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        //URLから削除したいIDを取得する
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'IDが指定されていません' }, { status: 400 });
+    }
+    await prisma.post.delete({
+        where: {
+            id: Number(id),
+        }
+    });
+    return NextResponse.json({ message: '削除しました' });
+    } catch (error) {
+        return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 });
+    }
+}
