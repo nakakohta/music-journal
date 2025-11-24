@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     }
 }
 
+
 export async function GET() {
     try {
         const posts = await prisma.post.findMany({
