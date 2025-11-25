@@ -1,31 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; //シングルトンパターンでエクスポートされたPrisma Client
+import { create } from 'domain';
 
 export async function POST(req: NextRequest) {
     try {
         // フロントからデータを受け取る
         const body = await req.json();
-        const { title, artist, content, mood } = body;
+        const { title, artistName, content, mood } = body;
 
-        // データベースに保存
-        const newPost = await prisma.post.create({
-            data: {
-                content: content,
-                mood: mood,
-                song: {
-                    create: {
-                        title: title,
-                        artist: artist,
-                    }
-                }
+        // artistテーブルの処理
+        const artist = await prisma.artist.upsert({
+            where: { name: artistName },
+            update: {},
+            create: { name: artistName },   
+        });
+
+        // songテーブルの処理
+        const song = await prisma.song.upsert({
+            where: {
+                title_artistId:{
+                    title: title,
+                    artistId: artist.id,
+                },
             },
-            // 保存したデータを、関連するSong情報込みで返す設定
+            update: {},
+            create: {
+                title: title,
+                artistId: artist.id,
+            },
+        });
+        
+        // journalテーブルの処理
+        const newJournal = await prisma.journal.create({
+            data: {
+                content: content || null,
+                mood: Number(mood),
+                songId: song.id, // 取得したsongのIDを使う
+            },
             include: {
-                song: true,
+                song: { include: { artist: true }  }
             }
         });
 
-        return NextResponse.json(newPost);
+        return NextResponse.json(newJournal);
+
+       
     }catch (error:any) {
         console.error(error);
         return NextResponse.json({ error: error.message ||'保存に失敗しました' }, { status: 500 } , );
@@ -35,16 +54,16 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
     try {
-        const posts = await prisma.post.findMany({
+        const journals = await prisma.journal.findMany({
             orderBy: {
                 createdAt: 'desc',
             },
             include: {
-                song: true,
+                song: { include: { artist: true }  },
             },
         });
         
-        return NextResponse.json(posts);
+        return NextResponse.json(journals);
     }catch (error) {
         return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
     }
@@ -59,7 +78,7 @@ export async function DELETE(req: NextRequest) {
         if (!id) {
             return NextResponse.json({ error: 'IDが指定されていません' }, { status: 400 });
     }
-    await prisma.post.delete({
+    await prisma.journal.delete({
         where: {
             id: Number(id),
         }
