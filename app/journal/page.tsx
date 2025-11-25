@@ -30,7 +30,15 @@ export default function JournalPage() {
     try {
       const res = await fetch('/api/journal'); // GETリクエスト
       const data = await res.json();
-      setJournals(data); // 取得したデータをStateに入れる -> 画面が更新される！
+
+      // サーバから配列が返ってくる想定
+      // もし配列ならStateにセット
+      if (Array.isArray(data)) {
+        setJournals(data);  // 取得したデータをStateに入れる -> 画面が更新される！
+      } else {
+        console.error('サーバからの応答が配列で来るはずなのに来ていないぜ:', data);
+        alert("データ取得エラー: " + (data.error || "詳細不明"));
+      }
     } catch (err) {
       console.error(err);
     }

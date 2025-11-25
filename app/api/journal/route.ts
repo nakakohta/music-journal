@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
 
 
 export async function GET() {
+    console.log("🟢 GETリクエストを受け取りました");
     try {
+
+        console.log("🟡 PrismaでDB検索開始...");
+
         const posts = await prisma.post.findMany({
             orderBy: {
                 createdAt: 'desc',
@@ -44,8 +48,10 @@ export async function GET() {
             },
         });
         
+        console.log("🟢 データ取得成功:", posts);
         return NextResponse.json(posts);
     }catch (error) {
+        console.error("🔴 APIエラー発生:", error);
         return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
     }
 }
