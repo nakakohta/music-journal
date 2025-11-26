@@ -1,3 +1,8 @@
+/**
+ * データベース操作もできるAPI
+ */
+
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; //シングルトンパターンでエクスポートされたPrisma Client
 import { create } from 'domain';

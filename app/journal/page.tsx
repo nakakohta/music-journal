@@ -50,6 +50,7 @@ export default function JournalPage() {
   // 画面が表示された「後」に一度だけ実行される (初期ロード)
   useEffect(() => {
     fetchJournals();
+    fetchArtists();
   }, []);
 
 
@@ -108,6 +109,17 @@ export default function JournalPage() {
     }
   };
 
+  const [suggestedArtists, setSuggestedArtists] = useState<{ name: string }[]>([]);
+
+  // 取得関数を追加
+  const fetchArtists = async () => {
+    const res = await fetch('/api/artist');
+    const data = await res.json();
+    setSuggestedArtists(data);
+  };
+
+
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -122,7 +134,22 @@ export default function JournalPage() {
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700">アーティスト</label>
-              <input name="artist" type="text" required className="w-full border p-2 rounded text-black" value={form.artist} onChange={handleChange} />
+              <input 
+                name="artist" 
+                type="text" 
+                required 
+                list="artist-list" 
+                className="w-full border p-2 rounded text-black" 
+                value={form.artist} 
+                onChange={handleChange}
+                placeholder="入力または選択..."
+              />
+              <datalist id="artist-list">
+                {suggestedArtists.map((a) => (
+                  <option key={a.name} value={a.name} />
+                ))}
+              </datalist>
+
             </div>
 
             {/* 気分スコアの選択肢 */}
