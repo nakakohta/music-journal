@@ -14,25 +14,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// テーブル定義
 
-// 局の情報を保存するテーブル
+// アーティストテーブル 
+model Artist {
+  id    Int    @id @default(autoincrement())
+  name  String @unique // 👈 これが重要！同じ名前は登録できない＆検索キーになる
+
+  songs Song[] // 1人のアーティストは複数の曲を持つ
+}
+
+// 曲
 model Song {
-  id Int @id @default(autoincrement())
-  title String
-  artist String
-  albumArt String?
+  id        Int     @id @default(autoincrement())
+  title     String
+  albumArt  String?
 
-  posts Post[]
+  // リレーション: 曲とアーティストを紐づける
+  artistId  Int
+  artist    Artist  @relation(fields: [artistId], references: [id])
+
+  journals  Journal[]
+
+  // 同じアーティストの同じ曲名は重複させない（複合ユニーク制約）
+  @@unique([title, artistId])
 }
 
 // 日記を保存するテーブル
-model Post {
-  id Int @id @default(autoincrement())
-  content String
-  mood String?
+model Journal {
+  id        Int      @id @default(autoincrement())
+  content   String?
+  mood      Int
   createdAt DateTime @default(now())
 
-  songId Int
-  song Song @relation(fields: [songId], references:  [id])
+  songId    Int
+  song      Song     @relation(fields: [songId], references: [id])
 }
